@@ -21,13 +21,24 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 bytemuck = "1.25.0"
 tracing = "0.1.44"
 notosans = "0.1.0"
-# typst = "0.14"
-# typst-svg = "0.14"
-# typst-as-lib = { version = "0.15", features = [
-#     "typst-kit-fonts",
-#     "typst-kit-embed-fonts",
-# ] }
 
 console_error_panic_hook = "0.1"
 console_log = "1.0"
 log = "0.4"
+
+# non-wasm32 dependencies
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+typst = "0.14"
+typst-svg = "0.14"
+typst-as-lib = { version = "0.15", features = [
+    "typst-kit-fonts",
+    "typst-kit-embed-fonts",
+] }
+iced_glass = { git = "https://github.com/maxbergmark/iced_glass", branch = "feat/iced_0.15", features = [
+    "text",
+] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+iced_glass = { git = "https://github.com/maxbergmark/iced_glass", branch = "feat/iced_0.15", features = [
+    # "text",
+] }

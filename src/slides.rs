@@ -1,12 +1,17 @@
 use iced::{
     Border, Color, Element, Font, Length, Size,
-    widget::{container, responsive, space, stack, text},
+    widget::{container, responsive, space, stack},
 };
 use iced_glass::widget::InnerContent;
 use iced_glass::{
     glass_stack,
     widget::{StackOffset, container as glass_container},
 };
+
+#[cfg(target_arch = "wasm32")]
+use iced::widget::text;
+#[cfg(not(target_arch = "wasm32"))]
+use iced_glass::widget::text as glass_text;
 
 use crate::Message;
 
@@ -354,8 +359,8 @@ fn glass_rectangle(opacity: f32, blur_radius: f32) -> Element<'static, Message> 
     responsive(move |size| {
         container(
             glass_container(space())
-                .width(size.width * 0.5)
-                .height(size.height * 0.35)
+                .width(size.width * 0.55)
+                .height(size.height * 0.4)
                 .glass_style(move |_| glass_style(opacity, blur_radius, 40.0))
                 .style(|_| container::Style {
                     border: Border::default().rounded(100.0),
@@ -369,12 +374,12 @@ fn glass_rectangle(opacity: f32, blur_radius: f32) -> Element<'static, Message> 
     .into()
 }
 
-fn text_overlay(_opacity: f32, _blur_radius: f32, _edge_radius: f32) -> Element<'static, Message> {
+#[cfg(not(target_arch = "wasm32"))]
+fn text_overlay(opacity: f32, blur_radius: f32, edge_radius: f32) -> Element<'static, Message> {
     container(
-        /*glass_*/
-        text("你好")
+        glass_text("你好")
             .size(500.0)
-            // .glass_style(move |_| glass_text_style(opacity, blur_radius, edge_radius))
+            .glass_style(move |_| glass_text_style(opacity, blur_radius, edge_radius))
             .font(Font {
                 family: iced::font::Family::Name("Noto Sans"),
                 // family: iced::font::Family::Name("Songti SC"),
@@ -388,6 +393,24 @@ fn text_overlay(_opacity: f32, _blur_radius: f32, _edge_radius: f32) -> Element<
         border: Border::default().width(1.0).color(Color::BLACK),
         ..Default::default()
     })
+    .into()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn text_overlay(opacity: f32, _blur_radius: f32, _edge_radius: f32) -> Element<'static, Message> {
+    container(
+        text("Getting text to render on wasm is hard...")
+            .font(Font {
+                family: iced::font::Family::Name("Noto Sans"),
+                // family: iced::font::Family::Name("Songti SC"),
+                weight: iced::font::Weight::Normal,
+                stretch: iced::font::Stretch::Normal,
+                style: iced::font::Style::Normal,
+            })
+            .size(100.0)
+            .color(Color::from_linear_rgba(1.0, 1.0, 1.0, 0.5 * opacity)),
+    )
+    .center(Length::Fill)
     .into()
 }
 
@@ -406,17 +429,18 @@ fn glass_style(opacity: f32, blur_radius: f32, edge_radius: f32) -> iced_glass::
     }
 }
 
-// fn glass_text_style(opacity: f32, blur_radius: f32, edge_radius: f32) -> iced_glass::Style {
-//     iced_glass::Style {
-//         blur_radius,
-//         lightness: 0.5,
-//         edge_radius,
-//         edge_height: 200.0,
-//         refractive_index: 1.5,
-//         chromatic_aberration: 0.0,
-//         rim_width: 1.0,
-//         rim_angle: 1.0,
-//         opacity,
-//         ..Default::default()
-//     }
-// }
+#[cfg(not(target_arch = "wasm32"))]
+fn glass_text_style(opacity: f32, blur_radius: f32, edge_radius: f32) -> iced_glass::Style {
+    iced_glass::Style {
+        blur_radius,
+        lightness: 0.5,
+        edge_radius,
+        edge_height: 200.0,
+        refractive_index: 1.5,
+        chromatic_aberration: 0.0,
+        rim_width: 1.0,
+        rim_angle: 1.0,
+        opacity,
+        ..Default::default()
+    }
+}
