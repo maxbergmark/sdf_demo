@@ -1,6 +1,7 @@
 use iced::{
     Border, Color, Element, Font, Length, Size,
-    widget::{container, responsive, space, stack},
+    mouse::Interaction,
+    widget::{container, image, mouse_area, responsive, row, space, stack},
 };
 use iced_glass::widget::InnerContent;
 use iced_glass::{
@@ -318,21 +319,8 @@ pub const SLIDES: &[Slide] = &[
         overlay: Some(|blend, t| {
             let t = t * 0.2;
             responsive(move |size| {
-                let r_c = size.width * 0.4 * 0.3;
-                let r_e = size.width * 0.3 * 0.3 * 0.2;
                 stack![
-                    glass_stack!(
-                        sphere(size, 0.3, 2.0, 5.0, t),
-                        sphere(size, 0.4, 7.0, 3.0, t),
-                        sphere(size, 0.3, 3.5, 6.0, t),
-                        sphere(size, 0.4, 4.0, 7.0, t),
-                    )
-                    .height(Length::Fill)
-                    .width(Length::Fill)
-                    .glass_style(move |_| glass_style(blend, 20.0, r_e))
-                    // .scrim(Color::from_rgba(1.0, 1.0, 1.0, 0.1))
-                    .corner_radius(r_c)
-                    .blending_factor(size.width * 0.1),
+                    morphing_spheres(size, blend, t),
                     text_overlay(1.0 - blend, 20.0, 5.0),
                 ]
             })
@@ -341,7 +329,101 @@ pub const SLIDES: &[Slide] = &[
             .into()
         }),
     },
+    Slide {
+        code: None,
+        equation: None,
+        shape: 17,
+        a: 1.0,
+        overlay: Some(|blend, t| {
+            let t = t * 0.2;
+            responsive(move |size| {
+                stack![
+                    morphing_spheres(size, 1.0 - blend, t),
+                    link_overlay(size, blend),
+                ]
+            })
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        }),
+    },
 ];
+
+fn image_handle(bytes: &'static [u8]) -> image::Handle {
+    image::Handle::from_bytes(bytes)
+}
+
+const FACE: &[u8] = include_bytes!("../assets/sdf_face.jpg");
+const FACE_LINK: &str = "https://www.youtube.com/watch?v=8--5LwHRhjk";
+
+const LANDSCAPE: &[u8] = include_bytes!("../assets/sdf_landscape.jpg");
+const LANDSCAPE_LINK: &str = "https://www.youtube.com/watch?v=BFld4EBO2RE";
+
+fn link_overlay(size: Size, blend: f32) -> Element<'static, Message> {
+    let aspect_ratio = 336.0 / 188.0;
+    let h = size.height * 0.3;
+    let w = h * aspect_ratio;
+    container(
+        row![
+            mouse_area(
+                container(image(image_handle(FACE)).width(w).height(h).opacity(blend),)
+                    .style(move |_| {
+                        container::Style {
+                            border: Border::default()
+                                .width(5.0)
+                                .color(Color::from_linear_rgba(1.0, 1.0, 1.0, blend)),
+                            ..Default::default()
+                        }
+                    })
+                    .center_x(w + 10.0)
+                    .center_y(h + 10.0)
+            )
+            .on_press(Message::OpenUrl(FACE_LINK))
+            .interaction(Interaction::Pointer),
+            mouse_area(
+                container(
+                    image(image_handle(LANDSCAPE))
+                        .width(w)
+                        .height(h)
+                        .opacity(blend),
+                )
+                .style(move |_| {
+                    container::Style {
+                        border: Border::default()
+                            .width(5.0)
+                            .color(Color::from_linear_rgba(1.0, 1.0, 1.0, blend)),
+                        ..Default::default()
+                    }
+                })
+                .center_x(w + 10.0)
+                .center_y(h + 10.0)
+            )
+            .on_press(Message::OpenUrl(LANDSCAPE_LINK))
+            .interaction(Interaction::Pointer),
+        ]
+        .spacing(size.height * 0.1),
+    )
+    .center(Length::Fill)
+    .into()
+}
+
+fn morphing_spheres(size: Size, blend: f32, t: f32) -> Element<'static, Message> {
+    let r_c = size.width * 0.4 * 0.3;
+    let r_e = size.width * 0.3 * 0.3 * 0.2;
+    glass_stack!(
+        sphere(size, 0.3, 2.0, 5.0, t),
+        sphere(size, 0.4, 7.0, 3.0, t),
+        sphere(size, 0.3, 3.5, 6.0, t),
+        sphere(size, 0.4, 4.0, 7.0, t),
+    )
+    .height(Length::Fill)
+    .width(Length::Fill)
+    .glass_style(move |_| glass_style(blend, 20.0, r_e))
+    // .scrim(Color::from_rgba(1.0, 1.0, 1.0, 0.1))
+    .corner_radius(r_c)
+    .blending_factor(size.width * 0.1)
+    .into()
+}
 
 fn sphere(size: Size, r: f32, xf: f32, yf: f32, t: f32) -> InnerContent<'static, Message> {
     let scale = size.width;

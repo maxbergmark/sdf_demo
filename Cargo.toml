@@ -42,3 +42,4 @@ iced_glass = { git = "https://github.com/maxbergmark/iced_glass", branch = "feat
 iced_glass = { git = "https://github.com/maxbergmark/iced_glass", branch = "feat/iced_0.15", features = [
     # "text",
 ] }
+web-sys = { version = "0.3", features = ["Window"] }

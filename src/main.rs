@@ -50,6 +50,7 @@ pub enum Message {
     MouseMoved(iced::Point),
     ShowDistance(bool),
     RenderingMethod(RenderingMethod),
+    OpenUrl(&'static str),
     // Blend(f32),
     // A(f32),
     // B(f32),
@@ -155,6 +156,13 @@ impl Ui {
             Message::ShowDistance(show) => {
                 self.uniforms.show_distance = show;
             }
+            Message::OpenUrl(url) =>
+            {
+                #[cfg(target_arch = "wasm32")]
+                if let Some(win) = web_sys::window() {
+                    let _ = win.open_with_url_and_target(url, "_blank");
+                }
+            }
             Message::Tick => {
                 let now = Instant::now();
                 self.uniforms.blend = self.blend.interpolate_with(|t| t, now);
@@ -220,7 +228,12 @@ impl Ui {
             })
             .on_press(Message::ShowDistance(true))
             .on_release(Message::ShowDistance(false))
-            .interaction(Interaction::Hidden)
+            .interaction(if self.index == SLIDES.len() - 1 {
+                Interaction::Idle
+                // Interaction::Pointer
+            } else {
+                Interaction::Hidden
+            })
         })
         .into()
     }
