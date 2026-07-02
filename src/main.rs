@@ -69,8 +69,8 @@ pub enum RenderingMethod {
     Outline = 2,
     Fill = 3,
     Shadow = 4,
-    InsideGlow = 5,
-    OutsideGlow = 6,
+    Core = 5,
+    Glow = 6,
 }
 
 fn main() -> iced::Result {
@@ -217,8 +217,8 @@ impl Ui {
                     '3' => Some(Message::RenderingMethod(RenderingMethod::Outline)),
                     '4' => Some(Message::RenderingMethod(RenderingMethod::Fill)),
                     '5' => Some(Message::RenderingMethod(RenderingMethod::Shadow)),
-                    '6' => Some(Message::RenderingMethod(RenderingMethod::InsideGlow)),
-                    '7' => Some(Message::RenderingMethod(RenderingMethod::OutsideGlow)),
+                    '6' => Some(Message::RenderingMethod(RenderingMethod::Core)),
+                    '7' => Some(Message::RenderingMethod(RenderingMethod::Glow)),
                     _ => None,
                 },
                 _ => None,
@@ -311,8 +311,8 @@ impl Ui {
                             glass_button("Outline", RenderingMethod::Outline),
                             glass_button("Fill", RenderingMethod::Fill),
                             glass_button("Shadow", RenderingMethod::Shadow),
-                            glass_button("Core", RenderingMethod::InsideGlow),
-                            glass_button("Glow", RenderingMethod::OutsideGlow),
+                            glass_button("Core", RenderingMethod::Core),
+                            glass_button("Glow", RenderingMethod::Glow),
                         ]
                         .spacing(20.0)
                     ])
