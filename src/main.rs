@@ -311,8 +311,8 @@ impl Ui {
                             glass_button("Outline", RenderingMethod::Outline),
                             glass_button("Fill", RenderingMethod::Fill),
                             glass_button("Shadow", RenderingMethod::Shadow),
-                            glass_button("Inside Glow", RenderingMethod::InsideGlow),
-                            glass_button("Outside Glow", RenderingMethod::OutsideGlow),
+                            glass_button("Core", RenderingMethod::InsideGlow),
+                            glass_button("Glow", RenderingMethod::OutsideGlow),
                         ]
                         .spacing(20.0)
                     ])
@@ -344,7 +344,7 @@ impl Ui {
                     ..Default::default()
                 }),
                 text(
-                    "Previous / Next slide\n\nRendering mode: \n    1 Distance\n    2 Gradient\n    3 Outline\n    4 Fill\n    5 Shadow\n    6 Inside Glow\n    7 Outside Glow\n\nVisualize the distance field"
+                    "Previous / Next slide\n\nRendering mode: \n    1 Distance\n    2 Gradient\n    3 Outline\n    4 Fill\n    5 Shadow\n    6 Core\n    7 Glow\n\nVisualize the distance field"
                 )
                 .size(15.0)
                 .font(FONT_NOTO)
