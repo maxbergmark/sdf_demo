@@ -1,5 +1,5 @@
 use iced::time::Instant;
-use iced::{Font, Radians, Rotation};
+use iced::{Background, Font, Radians, Rotation};
 
 use iced::widget::svg;
 use iced::{
@@ -138,6 +138,14 @@ impl Ui {
                 self.uniforms.to = SLIDES[self.index].shape;
                 self.uniforms.blend = 0.0;
                 self.current_shape = SLIDES[self.index].shape;
+                if SLIDES[self.index].rendering_method.is_some() {
+                    self.uniforms.rendering_method_from = self.uniforms.rendering_method_to;
+                    self.uniforms.rendering_method_to =
+                        SLIDES[self.index].rendering_method.unwrap() as u32;
+                    self.rendering_blend = Animation::new(0.0).slow();
+                    self.rendering_blend.go_mut(1.0, now);
+                    self.uniforms.rendering_blend = 0.0;
+                }
 
                 self.uniforms.last_frame_start = self.uniforms.frame_start;
                 self.uniforms.frame_start = self.start_time.elapsed().as_secs_f32();
@@ -286,36 +294,9 @@ impl Ui {
                     .width(1000.0)
                     .height(220.0)
                     .padding(Padding::new(30.0).horizontal(40.0)),
-                    container(self.info_opacity(move |opacity| {
-                        glass_container(column![
-                            text(
-                                "Controls\n\
- ← / →   Previous / Next slide\n\
- 1–7   Rendering mode: \n\t1 Distance\n\t2 Gradient\n\t3 Outline\n\t4 Fill\n\t5 Shadow\n\t6 Inside Glow\n\t7 Outside Glow\n\
- Left Click + Drag   Visualize the distance field"
-                            )
-                            .size(15.0)
-                            .font(FONT_NOTO)
-                            .color(Color::from_rgba(1.0, 1.0, 1.0, opacity))
-                        ])
-                        .glass_style(move |_theme| iced_glass::Style {
-                            blur_radius: 10.0,
-                            saturation: 1.0,
-                            lightness: -2.5,
-                            edge_radius: 20.0,
-                            edge_height: 200.0,
-                            rim_angle: 1.0,
-                            opacity,
-                            ..Default::default()
-                        })
-                        .style(|_theme| container::Style {
-                            border: Border::default().rounded(40.0),
-                            ..Default::default()
-                        })
-                        .padding(40.0)
-                    }))
-                    .align_bottom(Length::Fill)
-                    .align_left(Length::Fill),
+                    container(self.info_overlay())
+                        .align_bottom(Length::Fill)
+                        .align_left(Length::Fill),
                     container(row![
                         row![
                             info_button(),
@@ -344,6 +325,46 @@ impl Ui {
             .center_x(Length::Fill)
             .height(Length::Fill)
             .padding(Padding::new(20.0))
+        })
+    }
+
+    fn info_overlay(&self) -> Element<'_, Message> {
+        self.info_opacity(move |opacity| {
+            glass_container(column![
+                text("Controls").size(20.0).font(FONT_NOTO).color(Color::from_rgba(1.0, 1.0, 1.0, opacity)),
+                row![
+                    text("← →\n\n1-7\n\n\n\n\n\n\n\n\nLeft Click + Drag")
+                        .size(15.0).font(FONT_NOTO)
+                        .align_x(Alignment::End)
+                        .color(Color::from_rgba(1.0, 1.0, 1.0, opacity)),
+                    container(space())
+                        .width(1.0).height(Length::Fill)
+                        .style(move |_theme| container::Style {
+                            background: Some(Background::Color(Color::from_rgba(1.0, 1.0, 1.0, 0.3 * opacity))),
+                    ..Default::default()
+                }),
+                text(
+                    "Previous / Next slide\n\nRendering mode: \n    1 Distance\n    2 Gradient\n    3 Outline\n    4 Fill\n    5 Shadow\n    6 Inside Glow\n    7 Outside Glow\n\nVisualize the distance field"
+                )
+                .size(15.0)
+                .font(FONT_NOTO)
+                .color(Color::from_rgba(1.0, 1.0, 1.0, opacity))].spacing(10.0)
+            ])
+            .glass_style(move |_theme| iced_glass::Style {
+                blur_radius: 10.0,
+                saturation: 1.0,
+                lightness: -2.5,
+                edge_radius: 20.0,
+                edge_height: 200.0,
+                rim_angle: 1.0,
+                opacity,
+                ..Default::default()
+            })
+            .style(|_theme| container::Style {
+                border: Border::default().rounded(40.0),
+                ..Default::default()
+            })
+            .padding(40.0)
         })
     }
 

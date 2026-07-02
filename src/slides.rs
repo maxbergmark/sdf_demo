@@ -16,9 +16,9 @@ use iced::widget::text;
 #[cfg(not(target_arch = "wasm32"))]
 use iced_glass::widget::text as glass_text;
 
-use crate::Message;
+use crate::{Message, RenderingMethod};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Slide {
     pub code: Option<&'static str>,
     #[allow(unused)]
@@ -26,6 +26,18 @@ pub struct Slide {
     pub shape: u32,
     pub a: f32,
     pub overlay: Option<fn(blend: f32, t: f32) -> Element<'static, Message>>,
+    pub rendering_method: Option<RenderingMethod>,
+}
+
+impl Slide {
+    const DEFAULT: Self = Self {
+        code: None,
+        equation: None,
+        shape: 0,
+        a: 0.0,
+        overlay: None,
+        rendering_method: None,
+    };
 }
 
 pub const SLIDES: &[Slide] = &[
@@ -41,7 +53,8 @@ pub const SLIDES: &[Slide] = &[
         ),
         shape: 0,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -50,10 +63,11 @@ pub const SLIDES: &[Slide] = &[
 }
 "#,
         ),
-        equation: None,
+
         shape: 0,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -62,10 +76,11 @@ pub const SLIDES: &[Slide] = &[
     return length(max(d,vec2(0))) + min(max(d.x,d.y),0);
 }"#,
         ),
-        equation: None,
+
         shape: 1,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -73,10 +88,11 @@ pub const SLIDES: &[Slide] = &[
     return d - r;
 }"#,
         ),
-        equation: None,
+
         shape: 2,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -84,10 +100,11 @@ pub const SLIDES: &[Slide] = &[
     return rectangle(p, size - vec2(r)) - r;
 }"#,
         ),
-        equation: None,
+
         shape: 2,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -96,10 +113,28 @@ pub const SLIDES: &[Slide] = &[
     return color * intensity;
 }"#,
         ),
-        equation: None,
+
         shape: 3,
         a: 0.2,
-        overlay: None,
+
+        ..Slide::DEFAULT
+    },
+    Slide {
+        code: Some(
+            r#"fn soft_shadow(p: vec2, dir: vec2, k: f32) -> f32 {
+    var res = 1.0;
+    for (var t = 0.05; t < 1.0; t += sdf(p + dir * t)) {
+        res = min(res, k * sdf(p + dir * t) / t);
+    }
+    return clamp(res, 0.0, 1.0);
+}"#,
+        ),
+
+        shape: 3,
+        a: 0.2,
+        rendering_method: Some(RenderingMethod::Shadow),
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -107,10 +142,11 @@ pub const SLIDES: &[Slide] = &[
     return min(d1, d2);
 }"#,
         ),
-        equation: None,
+
         shape: 4,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -119,10 +155,11 @@ pub const SLIDES: &[Slide] = &[
     return min(a, b) - h*h/(k*16);
 }"#,
         ),
-        equation: None,
+
         shape: 4,
         a: 0.05,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -131,31 +168,29 @@ pub const SLIDES: &[Slide] = &[
     return min(a, b) - h*h/(k*16);
 }"#,
         ),
-        equation: None,
+
         shape: 4,
         a: 0.5,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 6,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 6,
         a: 0.2,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 6,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -163,10 +198,11 @@ pub const SLIDES: &[Slide] = &[
     return p - s * round(p / s);
 }"#,
         ),
-        equation: None,
+
         shape: 7,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -174,10 +210,11 @@ pub const SLIDES: &[Slide] = &[
     return max(d1, -d2);
 }"#,
         ),
-        equation: None,
+
         shape: 8,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -185,10 +222,11 @@ pub const SLIDES: &[Slide] = &[
     return max(d1, d2);
 }"#,
         ),
-        equation: None,
+
         shape: 9,
         a: 0.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     //     Slide {
     //         code: Some(
@@ -198,18 +236,20 @@ pub const SLIDES: &[Slide] = &[
     //         ),
     // shape: 10,
     //         a: 0.0,
-    //         overlay: None,
-    //     },
+
+    //
+    // ..Slide::DEFAULT     },
     Slide {
         code: Some(
             r#"fn distort(p: vec2, d: f32, t: f32) -> f32 {
     return d + sin(t * 2 + p.x * 10 + p.y * 20) * 0.01            
 }"#,
         ),
-        equation: None,
+
         shape: 9,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -221,10 +261,11 @@ pub const SLIDES: &[Slide] = &[
     return vec2(r * a_fold, r);
 }"#,
         ),
-        equation: None,
+
         shape: 11,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -234,10 +275,11 @@ pub const SLIDES: &[Slide] = &[
     return mat2x2(c, s, -s, c) * p;
 }"#,
         ),
-        equation: None,
+
         shape: 12,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -247,10 +289,11 @@ pub const SLIDES: &[Slide] = &[
     return (n + round(a / angle)) % n;
 }"#,
         ),
-        equation: None,
+
         shape: 13,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -260,24 +303,23 @@ pub const SLIDES: &[Slide] = &[
     return min(stem, arm);
 }"#,
         ),
-        equation: None,
+
         shape: 14,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 15,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 16,
         a: 1.0,
-        overlay: None,
+
+        ..Slide::DEFAULT
     },
     Slide {
         code: Some(
@@ -288,21 +330,19 @@ pub const SLIDES: &[Slide] = &[
     return -(z + h) * tan(theta - gamma);
 }"#,
         ),
-        equation: None,
+
         shape: 17,
         a: 1.0,
         overlay: Some(|blend, _t| glass_rectangle(blend, 0.0)),
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 17,
         a: 1.0,
         overlay: Some(|blend, _t| glass_rectangle(1.0, 20.0 * blend)),
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 17,
         a: 1.0,
         overlay: Some(|blend, _t| {
@@ -312,10 +352,9 @@ pub const SLIDES: &[Slide] = &[
             ]
             .into()
         }),
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 17,
         a: 1.0,
         overlay: Some(|blend, t| {
@@ -330,10 +369,9 @@ pub const SLIDES: &[Slide] = &[
             .height(Length::Fill)
             .into()
         }),
+        ..Slide::DEFAULT
     },
     Slide {
-        code: None,
-        equation: None,
         shape: 17,
         a: 1.0,
         overlay: Some(|blend, t| {
@@ -348,6 +386,7 @@ pub const SLIDES: &[Slide] = &[
             .height(Length::Fill)
             .into()
         }),
+        ..Slide::DEFAULT
     },
 ];
 
