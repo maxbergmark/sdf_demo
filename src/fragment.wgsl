@@ -75,14 +75,15 @@ fn fs_main(input: FragInput) -> @location(0) vec4<f32> {
     p.x *= aspect_ratio;
     let surface = sdf(p);
     var color = colorize(p, surface);
+
+    let px = 2.0 / uniforms.height;
+    let dist = length(p - uniforms.mouse);
+    color = mix(color, WHITE, smoothstep(1.5*px,0.0,abs(dist)-0.005));
     if uniforms.show_distance == 1 {
         let s = sdf(uniforms.mouse).sdf;
-        let px = 2.0 / uniforms.height;
-        let dist = length(p - uniforms.mouse);
         let diff = dist - abs(s.d);
         let ring_color = mix_srgb4(color, WHITE, 0.3);
         color = mix(color, ring_color, smoothstep(1.5*px,0.0,abs(diff)-0.002));
-        color = mix(color, WHITE, smoothstep(1.5*px,0.0,abs(dist)-0.005));
     }
 
     return vec4<f32>(color.rgb, 1.0);

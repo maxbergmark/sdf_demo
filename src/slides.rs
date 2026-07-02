@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use iced::{
     Border, Color, Element, Font, Length, Size,
     mouse::Interaction,
@@ -349,24 +351,23 @@ pub const SLIDES: &[Slide] = &[
     },
 ];
 
-fn image_handle(bytes: &'static [u8]) -> image::Handle {
-    image::Handle::from_bytes(bytes)
-}
-
 const FACE: &[u8] = include_bytes!("../assets/sdf_face.jpg");
 const FACE_LINK: &str = "https://www.youtube.com/watch?v=8--5LwHRhjk";
+static FACE_HANDLE: LazyLock<image::Handle> = LazyLock::new(|| image::Handle::from_bytes(FACE));
 
 const LANDSCAPE: &[u8] = include_bytes!("../assets/sdf_landscape.jpg");
 const LANDSCAPE_LINK: &str = "https://www.youtube.com/watch?v=BFld4EBO2RE";
+static LANDSCAPE_HANDLE: LazyLock<image::Handle> =
+    LazyLock::new(|| image::Handle::from_bytes(LANDSCAPE));
 
 fn link_overlay(size: Size, blend: f32) -> Element<'static, Message> {
-    let aspect_ratio = 336.0 / 188.0;
+    let aspect_ratio = 1280.0 / 720.0;
     let h = size.height * 0.3;
     let w = h * aspect_ratio;
     container(
         row![
             mouse_area(
-                container(image(image_handle(FACE)).width(w).height(h).opacity(blend),)
+                container(image(FACE_HANDLE.clone()).width(w).height(h).opacity(blend),)
                     .style(move |_| {
                         container::Style {
                             border: Border::default()
@@ -382,7 +383,7 @@ fn link_overlay(size: Size, blend: f32) -> Element<'static, Message> {
             .interaction(Interaction::Pointer),
             mouse_area(
                 container(
-                    image(image_handle(LANDSCAPE))
+                    image(LANDSCAPE_HANDLE.clone())
                         .width(w)
                         .height(h)
                         .opacity(blend),

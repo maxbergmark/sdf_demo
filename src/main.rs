@@ -1,6 +1,7 @@
-use iced::Font;
 use iced::time::Instant;
+use iced::{Font, Radians, Rotation};
 
+use iced::widget::svg;
 use iced::{
     Alignment, Animation, Border, Color, Element, Length, Padding, Size, Subscription, Task,
     keyboard::key::Named,
@@ -40,6 +41,7 @@ pub struct Ui {
     index: usize,
     current_shape: u32,
     start_time: Instant,
+    info: bool,
 }
 
 #[allow(unused)]
@@ -50,6 +52,7 @@ pub enum Message {
     MouseMoved(iced::Point),
     ShowDistance(bool),
     RenderingMethod(RenderingMethod),
+    ToggleInfo,
     OpenUrl(&'static str),
     // Blend(f32),
     // A(f32),
@@ -100,6 +103,8 @@ impl Default for Ui {
             uniforms: Uniforms {
                 from: 0,
                 to: 0,
+                rendering_method_from: RenderingMethod::Fill as u32,
+                rendering_method_to: RenderingMethod::Fill as u32,
                 blend: 0.0,
                 a: SLIDES[0].a,
                 ..Default::default()
@@ -111,6 +116,7 @@ impl Default for Ui {
             index: 0,
             current_shape: 0,
             start_time: Instant::now(),
+            info: false,
         }
     }
 }
@@ -156,12 +162,18 @@ impl Ui {
             Message::ShowDistance(show) => {
                 self.uniforms.show_distance = show;
             }
-            Message::OpenUrl(url) =>
-            {
+            Message::OpenUrl(url) => {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    let _ = open::that(url);
+                }
                 #[cfg(target_arch = "wasm32")]
                 if let Some(win) = web_sys::window() {
                     let _ = win.open_with_url_and_target(url, "_blank");
                 }
+            }
+            Message::ToggleInfo => {
+                self.info = !self.info;
             }
             Message::Tick => {
                 let now = Instant::now();
@@ -274,7 +286,44 @@ impl Ui {
                     .width(1000.0)
                     .height(220.0)
                     .padding(Padding::new(30.0).horizontal(40.0)),
-                    container(
+                    container(self.info_opacity(move |opacity| {
+                        glass_container(column![
+                            text(
+                                "Controls\n\
+ ← / →   Previous / Next slide\n\
+ 1–7   Rendering mode: \n\t1 Distance\n\t2 Gradient\n\t3 Outline\n\t4 Fill\n\t5 Shadow\n\t6 Inside Glow\n\t7 Outside Glow\n\
+ Left Click + Drag   Visualize the distance field"
+                            )
+                            .size(15.0)
+                            .font(FONT_NOTO)
+                            .color(Color::from_rgba(1.0, 1.0, 1.0, opacity))
+                        ])
+                        .glass_style(move |_theme| iced_glass::Style {
+                            blur_radius: 10.0,
+                            saturation: 1.0,
+                            lightness: -2.5,
+                            edge_radius: 20.0,
+                            edge_height: 200.0,
+                            rim_angle: 1.0,
+                            opacity,
+                            ..Default::default()
+                        })
+                        .style(|_theme| container::Style {
+                            border: Border::default().rounded(40.0),
+                            ..Default::default()
+                        })
+                        .padding(40.0)
+                    }))
+                    .align_bottom(Length::Fill)
+                    .align_left(Length::Fill),
+                    container(row![
+                        row![
+                            info_button(),
+                            navigation_button(Message::Previous),
+                            navigation_button(Message::Next),
+                        ]
+                        .spacing(20.0),
+                        space().width(Length::Fill),
                         row![
                             glass_button("Distance", RenderingMethod::Distance),
                             glass_button("Gradient", RenderingMethod::Gradient),
@@ -285,8 +334,8 @@ impl Ui {
                             glass_button("Outside Glow", RenderingMethod::OutsideGlow),
                         ]
                         .spacing(20.0)
-                    )
-                    .align_bottom(Length::Fill)
+                    ])
+                    .align_bottom(80.0)
                     .align_right(Length::Fill)
                 ]
                 .width(Length::Fill)
@@ -342,6 +391,24 @@ impl Ui {
         )
         .into()
     }
+
+    fn info_opacity<'a, F, T>(&self, f: F) -> Element<'a, Message>
+    where
+        F: Fn(f32) -> T + 'a,
+        T: Into<Element<'a, Message>>,
+    {
+        let opacity = if self.info { 1.0 } else { 0.0 };
+        iced::widget::transition(
+            opacity,
+            || {
+                Animation::new(0.0)
+                    .slow()
+                    .easing(iced::animation::Easing::EaseInOutCubic)
+            },
+            move |animation, now| f(animation.interpolate_with(std::convert::identity, now)),
+        )
+        .into()
+    }
 }
 
 const FONT_NOTO: Font = Font {
@@ -350,6 +417,31 @@ const FONT_NOTO: Font = Font {
     stretch: iced::font::Stretch::Normal,
     style: iced::font::Style::Normal,
 };
+
+fn info_button() -> Element<'static, Message> {
+    glass_container(
+        button(text("?").size(20.0).font(FONT_NOTO))
+            .style(button_style)
+            .on_press(Message::ToggleInfo),
+    )
+    .glass_style(|_theme| iced_glass::Style {
+        blur_radius: 10.0,
+        saturation: 1.0,
+        lightness: -2.5,
+        edge_radius: 20.0,
+        edge_height: 200.0,
+        rim_angle: 1.0,
+        ..Default::default()
+    })
+    .style(|_theme| container::Style {
+        border: Border::default().rounded(25.0),
+        ..Default::default()
+    })
+    .center_x(50.0)
+    .center_y(50.0)
+    .padding(5.0)
+    .into()
+}
 
 fn glass_button(s: &str, method: RenderingMethod) -> Element<'_, Message> {
     glass_container(
@@ -373,6 +465,47 @@ fn glass_button(s: &str, method: RenderingMethod) -> Element<'_, Message> {
     .center_x(80.0)
     .center_y(30.0)
     .padding(0.0)
+    .into()
+}
+
+fn navigation_button(message: Message) -> Element<'static, Message> {
+    let rotation = match message {
+        Message::Previous => Radians::PI,
+        Message::Next => Radians(0.0),
+        _ => Radians(0.0),
+    };
+    glass_container(
+        button(
+            svg(svg::Handle::from_memory(include_bytes!(
+                "../assets/play.svg"
+            )))
+            .rotation(Rotation::Solid(rotation))
+            .style(|_, _| svg::Style {
+                color: Some(Color::WHITE),
+            })
+            .opacity(0.5)
+            .width(Length::Fill)
+            .height(Length::Fill),
+        )
+        .style(button_style)
+        .on_press(message),
+    )
+    .glass_style(|_theme| iced_glass::Style {
+        blur_radius: 10.0,
+        saturation: 1.0,
+        lightness: -2.5,
+        edge_radius: 20.0,
+        edge_height: 200.0,
+        rim_angle: 1.0,
+        ..Default::default()
+    })
+    .style(|_theme| container::Style {
+        border: Border::default().rounded(25.0),
+        ..Default::default()
+    })
+    .center_x(50.0)
+    .center_y(50.0)
+    .padding(5.0)
     .into()
 }
 

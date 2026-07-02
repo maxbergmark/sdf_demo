@@ -37,6 +37,7 @@ typst-as-lib = { version = "0.15", features = [
 iced_glass = { git = "https://github.com/maxbergmark/iced_glass", branch = "feat/iced_0.15", features = [
     "text",
 ] }
+open = "5.3.6"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 iced_glass = { git = "https://github.com/maxbergmark/iced_glass", branch = "feat/iced_0.15", features = [
