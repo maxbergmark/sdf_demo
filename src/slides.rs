@@ -442,7 +442,8 @@ fn link_overlay(size: Size, blend: f32) -> Element<'static, Message> {
             .on_press(Message::OpenUrl(LANDSCAPE_LINK))
             .interaction(Interaction::Pointer),
         ]
-        .spacing(size.height * 0.1),
+        .spacing(size.height * 0.1)
+        .wrap(),
     )
     .center(Length::Fill)
     .into()
