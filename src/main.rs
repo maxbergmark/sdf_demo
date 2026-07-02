@@ -1,5 +1,5 @@
 use iced::time::Instant;
-use iced::{Background, Font, Radians, Rotation};
+use iced::{Background, Font, Point, Radians, Rotation};
 
 use iced::widget::svg;
 use iced::{
@@ -241,10 +241,18 @@ impl Ui {
             ])
             .on_move(move |mouse| {
                 let aspect_ratio = size.width / size.height;
-                Message::MouseMoved(iced::Point::new(
-                    (mouse.x / size.width * 2.0 - 1.0) * aspect_ratio,
-                    mouse.y / size.height * 2.0 - 1.0,
-                ))
+                let point = if aspect_ratio > 1.0 {
+                    Point::new(
+                        (mouse.x / size.width * 2.0 - 1.0) * aspect_ratio,
+                        mouse.y / size.height * 2.0 - 1.0,
+                    )
+                } else {
+                    Point::new(
+                        mouse.x / size.width * 2.0 - 1.0,
+                        (mouse.y / size.height * 2.0 - 1.0) / aspect_ratio,
+                    )
+                };
+                Message::MouseMoved(point)
             })
             .on_press(Message::ShowDistance(true))
             .on_release(Message::ShowDistance(false))
