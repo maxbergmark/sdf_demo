@@ -297,25 +297,28 @@ impl Ui {
                     container(self.info_overlay())
                         .align_bottom(Length::Fill)
                         .align_left(Length::Fill),
-                    container(row![
+                    container(
                         row![
-                            info_button(),
-                            navigation_button(Message::Previous),
-                            navigation_button(Message::Next),
+                            row![
+                                info_button(),
+                                navigation_button(Message::Previous),
+                                navigation_button(Message::Next),
+                            ]
+                            .spacing(20.0),
+                            space().width(Length::Fill),
+                            row![
+                                glass_button("Distance", RenderingMethod::Distance),
+                                glass_button("Gradient", RenderingMethod::Gradient),
+                                glass_button("Outline", RenderingMethod::Outline),
+                                glass_button("Fill", RenderingMethod::Fill),
+                                glass_button("Shadow", RenderingMethod::Shadow),
+                                glass_button("Core", RenderingMethod::Core),
+                                glass_button("Glow", RenderingMethod::Glow),
+                            ]
+                            .spacing(20.0)
                         ]
-                        .spacing(20.0),
-                        space().width(Length::Fill),
-                        row![
-                            glass_button("Distance", RenderingMethod::Distance),
-                            glass_button("Gradient", RenderingMethod::Gradient),
-                            glass_button("Outline", RenderingMethod::Outline),
-                            glass_button("Fill", RenderingMethod::Fill),
-                            glass_button("Shadow", RenderingMethod::Shadow),
-                            glass_button("Core", RenderingMethod::Core),
-                            glass_button("Glow", RenderingMethod::Glow),
-                        ]
-                        .spacing(20.0)
-                    ])
+                        .align_y(Alignment::End)
+                    )
                     .align_bottom(80.0)
                     .align_right(Length::Fill)
                 ]
@@ -480,7 +483,7 @@ fn glass_button(s: &str, method: RenderingMethod) -> Element<'_, Message> {
         ..Default::default()
     })
     .style(|_theme| container::Style {
-        border: Border::default().rounded(5.0),
+        border: Border::default().rounded(10.0),
         ..Default::default()
     })
     .center_x(80.0)
