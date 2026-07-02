@@ -116,6 +116,7 @@ pub const SLIDES: &[Slide] = &[
 
         shape: 3,
         a: 0.2,
+        rendering_method: Some(RenderingMethod::Fill),
 
         ..Slide::DEFAULT
     },

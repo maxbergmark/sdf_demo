@@ -10,12 +10,19 @@
             outline: none;
         }
     </style>
+
     <link data-trunk rel="icon" href="assets/icon.svg" type="image/svg+xml" />
     <base data-trunk-public-url />
 </head>
 
 <body style="height: 100%; margin: 0">
     <link data-trunk rel="rust" href="Cargo.toml" data-bin="sdf_demo" data-wasm-opt="z" />
+    <script>
+        new MutationObserver((_, obs) => {
+            const c = document.querySelector("canvas");
+            if (c) { c.tabIndex = 0; c.focus(); obs.disconnect(); }
+        }).observe(document.body, { childList: true, subtree: true });
+    </script>
 </body>
 
 </html>

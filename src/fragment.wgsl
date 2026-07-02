@@ -72,11 +72,15 @@ const PI = 3.14159265358979323846;
 fn fs_main(input: FragInput) -> @location(0) vec4<f32> {
     let aspect_ratio = uniforms.width / uniforms.height;
     var p = input.uv * 2.0 - vec2<f32>(1.0, 1.0);
-    p.x *= aspect_ratio;
+    if aspect_ratio > 1.0 {
+        p.x *= aspect_ratio;
+    } else {
+        p.y /= aspect_ratio;
+    }
     let surface = sdf(p);
     var color = colorize(p, surface);
 
-    let px = 2.0 / uniforms.height;
+    let px = px();
     let dist = length(p - uniforms.mouse);
     color = mix(color, WHITE, smoothstep(1.5*px,0.0,abs(dist)-0.005));
     if uniforms.show_distance == 1 {
@@ -121,7 +125,7 @@ fn colorize_select(p: vec2<f32>, surface: Surface, method: u32) -> vec4<f32> {
 }
 
 fn distance(d: f32) -> vec4<f32> {
-    let px = 2.0 / uniforms.height;
+    let px = px();
     var col = select(vec3<f32>(0.9,0.6,0.3), vec3<f32>(0.65,0.85,1.0), d<0.0);
 	col *= 1.0 - exp2(-12.0*abs(d));
 	col *= 0.8 + 0.2*cos(120.0*d);
@@ -130,7 +134,7 @@ fn distance(d: f32) -> vec4<f32> {
 }
 
 fn gradient(sdf: SdfGradient) -> vec4<f32> {
-    let px = 2.0 / uniforms.height;
+    let px = px();
     let d = sdf.d;
     let g = sdf.gradient;
     var col = select(vec3<f32>(0.4, 0.7, 0.85), vec3<f32>(0.9, 0.6, 0.3), d > 0.0);
@@ -145,20 +149,20 @@ fn gradient(sdf: SdfGradient) -> vec4<f32> {
 
 fn outline(surface: Surface) -> vec4<f32> {
     let d = surface.sdf.d;
-    let px = 2.0 / uniforms.height;
+    let px = px();
 	let col = mix( vec3<f32>(0.0), surface.color.rgb, smoothstep(1.5*px,0.0,abs(d)-0.002) );
     return vec4<f32>(col, 1.0);
 }
 
 fn fill(surface: Surface) -> vec4<f32> {
     let d = surface.sdf.d;
-    let px = 2.0 / uniforms.height;
+    let px = px();
 	let col = mix( vec3<f32>(0), surface.color.rgb, smoothstep(1.5*px,0.0,d-0.002) );
     return vec4<f32>(col, 1.0);
 }
 
 fn inside_glow(surface: Surface) -> vec4<f32> {
-    let px = 2.0 / uniforms.height;
+    let px = px();
     let d = surface.sdf.d;
     let decay = exp(-d*d * 50.0);
 	let col = mix( vec3<f32>(0), to_linear(surface.color.rgb), decay * smoothstep(1.5*px,0.0,d-0.002) );
@@ -166,7 +170,7 @@ fn inside_glow(surface: Surface) -> vec4<f32> {
 }
 
 fn outside_glow(surface: Surface) -> vec4<f32> {
-    let px = 2.0 / uniforms.height;
+    let px = px();
     let d = surface.sdf.d;
     let decay = exp(-d*d * 500.0);
 	let bg = mix( vec3<f32>(0), to_linear(surface.color.rgb), decay * smoothstep(0.0,1.5*px,d+0.002) );
@@ -175,7 +179,7 @@ fn outside_glow(surface: Surface) -> vec4<f32> {
 }
 
 fn shadow(p: vec2<f32>, surface: Surface) -> vec4<f32> {
-    let px = 2.0 / uniforms.height;
+    let px = px();
     let d = surface.sdf.d;
     let dir = normalize(vec2<f32>(-1.0, -1.0));
     let shadow = soft_shadow(p, dir, 1.0, 0.05);
@@ -972,4 +976,8 @@ fn mix_srgb(a: vec3<f32>, b: vec3<f32>, t: f32) -> vec3<f32> {
 
 fn mix_srgb4(a: vec4<f32>, b: vec4<f32>, t: f32) -> vec4<f32> {
     return vec4<f32>(mix_srgb(a.rgb, b.rgb, t), mix(a.a, b.a, t));
+}
+
+fn px() -> f32 {
+    return 2.0 / min(uniforms.width, uniforms.height);
 }
