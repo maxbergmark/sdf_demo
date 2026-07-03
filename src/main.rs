@@ -80,10 +80,10 @@ fn main() -> iced::Result {
         let _ = console_log::init_with_level(log::Level::Warn);
     }
 
-    // tracing_subscriber::fmt()
-    //     .pretty() // multi-line, color-coded output with file:line info
-    //     .with_env_filter("warn,iced=warn")
-    //     .init();
+    tracing_subscriber::fmt()
+        .pretty() // multi-line, color-coded output with file:line info
+        .with_env_filter("warn,iced=info")
+        .init();
 
     iced::application(Ui::boot, Ui::update, Ui::view)
         .font(include_bytes!("../fonts/roboto.ttf"))
@@ -129,40 +129,12 @@ impl Ui {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Next => {
-                let now = Instant::now();
                 self.index = (self.index + 1) % SLIDES.len();
-                self.blend = Animation::new(0.0).slow();
-                self.blend.go_mut(1.0, now);
-                self.a.go_mut(SLIDES[self.index].a, now);
-                self.uniforms.from = self.current_shape;
-                self.uniforms.to = SLIDES[self.index].shape;
-                self.uniforms.blend = 0.0;
-                self.current_shape = SLIDES[self.index].shape;
-                if SLIDES[self.index].rendering_method.is_some() {
-                    self.uniforms.rendering_method_from = self.uniforms.rendering_method_to;
-                    self.uniforms.rendering_method_to =
-                        SLIDES[self.index].rendering_method.unwrap() as u32;
-                    self.rendering_blend = Animation::new(0.0).slow();
-                    self.rendering_blend.go_mut(1.0, now);
-                    self.uniforms.rendering_blend = 0.0;
-                }
-
-                self.uniforms.last_frame_start = self.uniforms.frame_start;
-                self.uniforms.frame_start = self.start_time.elapsed().as_secs_f32();
+                return self.set_slide();
             }
             Message::Previous => {
                 self.index = (self.index + SLIDES.len() - 1) % SLIDES.len();
-                let now = Instant::now();
-                self.blend = Animation::new(0.0).slow();
-                self.blend.go_mut(1.0, now);
-                self.a.go_mut(SLIDES[self.index].a, now);
-                self.uniforms.from = self.current_shape;
-                self.uniforms.to = SLIDES[self.index].shape;
-                self.uniforms.blend = 0.0;
-                self.current_shape = SLIDES[self.index].shape;
-
-                self.uniforms.last_frame_start = self.uniforms.frame_start;
-                self.uniforms.frame_start = self.start_time.elapsed().as_secs_f32();
+                return self.set_slide();
             }
             Message::MouseMoved(mouse) => {
                 self.uniforms.mouse = mouse;
@@ -203,6 +175,25 @@ impl Ui {
         Task::none()
     }
 
+    fn set_slide(&mut self) -> Task<Message> {
+        let now = Instant::now();
+        self.blend = Animation::new(0.0).slow();
+        self.blend.go_mut(1.0, now);
+        self.a.go_mut(SLIDES[self.index].a, now);
+        self.uniforms.from = self.current_shape;
+        self.uniforms.to = SLIDES[self.index].shape;
+        self.uniforms.blend = 0.0;
+        self.current_shape = SLIDES[self.index].shape;
+        self.uniforms.last_frame_start = self.uniforms.frame_start;
+        self.uniforms.frame_start = self.start_time.elapsed().as_secs_f32();
+
+        if let Some(rendering_method) = SLIDES[self.index].rendering_method {
+            Task::done(Message::RenderingMethod(rendering_method))
+        } else {
+            Task::none()
+        }
+    }
+
     pub fn subscription(&self) -> Subscription<Message> {
         let timer = iced::time::every(std::time::Duration::from_millis(10)).map(|_| Message::Tick);
         let _transition =
@@ -239,26 +230,11 @@ impl Ui {
                 self.overlay(),
                 self.slide_overlay(),
             ])
-            .on_move(move |mouse| {
-                let aspect_ratio = size.width / size.height;
-                let point = if aspect_ratio > 1.0 {
-                    Point::new(
-                        (mouse.x / size.width * 2.0 - 1.0) * aspect_ratio,
-                        mouse.y / size.height * 2.0 - 1.0,
-                    )
-                } else {
-                    Point::new(
-                        mouse.x / size.width * 2.0 - 1.0,
-                        (mouse.y / size.height * 2.0 - 1.0) / aspect_ratio,
-                    )
-                };
-                Message::MouseMoved(point)
-            })
+            .on_move(move |mouse| Message::MouseMoved(self.mouse_position(mouse, size)))
             .on_press(Message::ShowDistance(true))
             .on_release(Message::ShowDistance(false))
             .interaction(if self.index == SLIDES.len() - 1 {
                 Interaction::Idle
-                // Interaction::Pointer
             } else {
                 Interaction::Hidden
             })
@@ -266,76 +242,75 @@ impl Ui {
         .into()
     }
 
+    fn mouse_position(&self, mouse: Point, size: Size) -> Point {
+        let aspect_ratio = size.width / size.height;
+        if aspect_ratio > 1.0 {
+            Point::new(
+                (mouse.x / size.width * 2.0 - 1.0) * aspect_ratio,
+                mouse.y / size.height * 2.0 - 1.0,
+            )
+        } else {
+            Point::new(
+                mouse.x / size.width * 2.0 - 1.0,
+                (mouse.y / size.height * 2.0 - 1.0) / aspect_ratio,
+            )
+        }
+    }
+
     pub fn overlay(&self) -> Element<'_, Message> {
-        let slide = &SLIDES[self.index];
-        self.transition_opacity(move |opacity| {
-            container(
-                column![
-                    glass_container(
-                        row![
-                            container(slide.code.map(move |code| code_view(
-                                code,
-                                opacity,
-                                Language::Wgsl
-                            )))
-                            .align_x(Alignment::Start)
-                            .width(Length::Fill)
-                            .center_y(Length::Fill),
-                            self.equation(slide, opacity),
-                        ]
-                        .spacing(10.0)
-                    )
-                    .glass_style(move |_theme| iced_glass::Style {
-                        blur_radius: 10.0,
-                        saturation: 1.0,
-                        lightness: -2.5,
-                        edge_radius: 20.0,
-                        edge_height: 200.0,
-                        rim_angle: 1.0,
-                        opacity,
-                        ..Default::default()
-                    })
-                    .style(|_theme| container::Style {
-                        border: Border::default().rounded(40.0),
-                        ..Default::default()
-                    })
-                    .width(1000.0)
-                    .height(220.0)
-                    .padding(Padding::new(30.0).horizontal(40.0)),
-                    container(self.info_overlay())
-                        .align_bottom(Length::Fill)
-                        .align_left(Length::Fill),
-                    container(
-                        row![
-                            row![
-                                info_button(),
-                                navigation_button(Message::Previous),
-                                navigation_button(Message::Next),
-                            ]
-                            .spacing(20.0),
-                            space().width(Length::Fill),
-                            row![
-                                glass_button("Distance", RenderingMethod::Distance),
-                                glass_button("Gradient", RenderingMethod::Gradient),
-                                glass_button("Outline", RenderingMethod::Outline),
-                                glass_button("Fill", RenderingMethod::Fill),
-                                glass_button("Shadow", RenderingMethod::Shadow),
-                                glass_button("Core", RenderingMethod::Core),
-                                glass_button("Glow", RenderingMethod::Glow),
-                            ]
-                            .spacing(20.0)
-                        ]
-                        .align_y(Alignment::End)
-                    )
+        container(
+            column![
+                self.code_overlay(),
+                container(self.info_overlay())
+                    .align_bottom(Length::Fill)
+                    .align_left(Length::Fill),
+                container(self.control_overlay())
                     .align_bottom(80.0)
                     .align_right(Length::Fill)
+            ]
+            .width(Length::Fill)
+            .align_x(Alignment::Center),
+        )
+        .center_x(Length::Fill)
+        .height(Length::Fill)
+        .padding(Padding::new(20.0))
+        .into()
+    }
+
+    fn code_overlay(&self) -> Element<'_, Message> {
+        let slide = &SLIDES[self.index];
+        self.transition_opacity(move |opacity| {
+            glass_container(
+                row![
+                    container(
+                        slide
+                            .code
+                            .map(move |code| code_view(code, opacity, Language::Wgsl))
+                    )
+                    .align_x(Alignment::Start)
+                    .width(Length::Fill)
+                    .center_y(Length::Fill),
+                    self.equation(slide, opacity),
                 ]
-                .width(Length::Fill)
-                .align_x(Alignment::Center),
+                .spacing(10.0),
             )
-            .center_x(Length::Fill)
-            .height(Length::Fill)
-            .padding(Padding::new(20.0))
+            .glass_style(move |_theme| iced_glass::Style {
+                blur_radius: 10.0,
+                saturation: 1.0,
+                lightness: -2.5,
+                edge_radius: 20.0,
+                edge_height: 200.0,
+                rim_angle: 1.0,
+                opacity,
+                ..Default::default()
+            })
+            .style(|_theme| container::Style {
+                border: Border::default().rounded(40.0),
+                ..Default::default()
+            })
+            .width(1000.0)
+            .height(220.0)
+            .padding(Padding::new(30.0).horizontal(40.0))
         })
     }
 
@@ -377,6 +352,30 @@ impl Ui {
             })
             .padding(40.0)
         })
+    }
+
+    fn control_overlay(&self) -> Element<'_, Message> {
+        row![
+            row![
+                info_button(),
+                navigation_button(Message::Previous),
+                navigation_button(Message::Next),
+            ]
+            .spacing(20.0),
+            space().width(Length::Fill),
+            row![
+                glass_button("Distance", RenderingMethod::Distance),
+                glass_button("Gradient", RenderingMethod::Gradient),
+                glass_button("Outline", RenderingMethod::Outline),
+                glass_button("Fill", RenderingMethod::Fill),
+                glass_button("Shadow", RenderingMethod::Shadow),
+                glass_button("Core", RenderingMethod::Core),
+                glass_button("Glow", RenderingMethod::Glow),
+            ]
+            .spacing(20.0)
+        ]
+        .align_y(Alignment::End)
+        .into()
     }
 
     fn slide_overlay(&self) -> Element<'_, Message> {

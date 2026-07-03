@@ -186,7 +186,7 @@ fn shadow(p: vec2<f32>, surface: Surface) -> vec4<f32> {
     let y = p.y + 0.5;
     let bg = mix(vec3<f32>(0.95, 0.94, 0.92), vec3<f32>(0.80, 0.79, 0.82), y);
     let base_lin = to_linear(bg);
-    let ambient = 0.35;                                   // shadows never go below this
+    let ambient = 0.135;                                   // shadows never go below this
     let shade = ambient + (1.0 - ambient) * shadow;      // shadow in [0,1]
     let shadow_tint = vec3<f32>(0.62, 0.60, 0.66);         // cool, desaturated
     let background = base_lin * mix(shadow_tint, vec3<f32>(1.0), shade);
