@@ -257,17 +257,16 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
     }
     if index == 2 {
         let t = sin(uniforms.t * 2.0) * 0.5 + 0.5;
-        let w = 0.1 * t; 
+        let w = 0.1 * t;
         let a = uniforms.a;
-        let size = vec2<f32>(0.5 - w * a , 0.4 - w * a);
-        surface.sdf = smooth_gradient(rectangle_gradient(p, size), w);
+        let size = vec2<f32>(0.5 + w * (1-a) , 0.4 + w * (1-a));
+        surface.sdf = rounded_rectangle_gradient(p, size, w);
     }
     if index == 3 {
         let t = sin(uniforms.t * 2.0) * 0.5 + 0.5;
         let w = 20.0 / t;
-        let size = vec2<f32>(0.4, 0.3);
-        var sdg = rectangle_gradient(p, size);
-        sdg.d -= 0.1;
+        let size = vec2<f32>(0.5, 0.4);
+        let sdg = rounded_rectangle_gradient(p, size, 0.1);
         surface.sdf = sdg;
         surface.color = sunlight(with_color(sdg, EQT_ORANGE), w);
     }
@@ -311,7 +310,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
     }
     if index == 7 {
         let sdg = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4)*0.35), vec2<f32>(0.4, 0.3)*0.1), 0.02);
-        let final_color = sunlight(with_color(sdg, EQT_ORANGE), 50.0);
+        let final_color = sunlight(with_color(sdg, EQT_ORANGE), 100.0);
         surface.sdf = sdg;
         surface.color = final_color;
     }
@@ -321,7 +320,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         let d2 = circle(p - uniforms.mouse, 0.5);
         var sdg = ssub_gradient(d1, d2, 0.01);
         surface.sdf = sdg;
-        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 30.0);
+        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 100.0);
     }
     if index == 9 {
         let x_offset = array<f32, 10>(15.105762016284807, 66.75213939380032, 24.576142195051297, 78.05102918739071, 42.735442706267754, 51.001237867972385, 72.34326969104954, 7.327654375380755, 90.40682406109272, 35.71276539571075);
@@ -344,7 +343,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
             freq *= 1.25;
         }
         surface.sdf = sdg;
-        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 30.0);
+        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 100.0);
     }
     // if index == 10 {
     //     let t = uniforms.t;
