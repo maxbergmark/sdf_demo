@@ -80,10 +80,13 @@ fn main() -> iced::Result {
         let _ = console_log::init_with_level(log::Level::Warn);
     }
 
-    tracing_subscriber::fmt()
-        .pretty() // multi-line, color-coded output with file:line info
-        .with_env_filter("warn,iced=info")
-        .init();
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        tracing_subscriber::fmt()
+            .pretty() // multi-line, color-coded output with file:line info
+            .with_env_filter("warn,iced=info")
+            .init();
+    }
 
     iced::application(Ui::boot, Ui::update, Ui::view)
         .font(include_bytes!("../fonts/roboto.ttf"))
@@ -98,8 +101,6 @@ fn main() -> iced::Result {
 impl Default for Ui {
     fn default() -> Self {
         Self {
-            // width: 1440.0,
-            // height: 1440.0,
             uniforms: Uniforms {
                 from: 0,
                 to: 0,
