@@ -357,7 +357,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         var sdg = smooth_gradient(heart_gradient(repeat_round(p, 12.0) + vec2<f32>(0.0, -0.8), 0.125), 0.01);
         sdg = unfold_gradient(p, sdg, 12.0);
         surface.sdf = sdg;
-        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 30.0);
+        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 50.0);
     }
     if index == 12 {
         let p_rot = rotate(p, uniforms.t * 0.2);
@@ -379,22 +379,22 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
 
         let s = smin_surface(smin_surface(heart_s, star_s, 0.0), heart2_s, 0.0);
         surface.sdf = s.sdf;
-        surface.color = sunlight(s, 30.0);
+        surface.color = sunlight(s, 50.0);
     }
     if index == 13 {
         let s = hearts_and_stars(p);
         surface.sdf = s.sdf;
-        surface.color = sunlight(s, 30.0);
+        surface.color = sunlight(s, 50.0);
     }
     if index == 14 {
         let sdg = eqt_sdf_gradient(p);
         surface.sdf = sdg;
-        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 30.0);
+        surface.color = sunlight(with_color(sdg, EQT_ORANGE), 50.0);
     }
     if index == 15 {
         let s = eqt_logo_sdf(p);
         surface.sdf = s.sdf;
-        surface.color = sunlight(s, 30.0);
+        surface.color = sunlight(s, 50.0);
     }
     if index == 16 {
         let t = uniforms.t - frame_start;
@@ -406,7 +406,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         background.sdf.d += offset;
         let s = smin_surface(logo, background, 0.0);
         surface.sdf = s.sdf;
-        surface.color = sunlight(s, 30.0);
+        surface.color = sunlight(s, 50.0);
     }
     if index == 17 {
         let scale = 2.0;
@@ -415,7 +415,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         var background = hearts_and_stars(p);
         let s = smin_surface(logo, background, 0.0);
         surface.sdf = s.sdf;
-        surface.color = sunlight(s, 30.0);
+        surface.color = sunlight(s, 50.0);
     }
     return surface;
 }
@@ -524,6 +524,9 @@ fn repeat_round(p: vec2<f32>, n: f32) -> vec2<f32> {
 }
 
 fn repeat_idx(p: vec2<f32>, n: f32) -> f32 {
+    if all(p == vec2<f32>(0.0, 0.0)) {
+        return 0.0;
+    }
     let angle = 2.0 * PI / n;
     let a = atan2(p.y, p.x);
     return (n + round(a / angle)) % n;
@@ -559,7 +562,7 @@ fn hearts_and_stars(p: vec2<f32>) -> Surface {
         let dir = select(1.0, -1.0, idx % 2.0 == 0.0);
         let a2 = t * 2.0 * dir;
         let p_repeat = repeat_round(p2_rot, 16.0) + vec2<f32>(0.0, -1.1);
-        var sdg = smooth_gradient(star_gradient(rotate(p_repeat, a2), 0.125), 0.005);
+        var sdg = smooth_gradient(star_gradient(rotate(p_repeat, a2), 0.125), 0.002);
         sdg = unfold_gradient(p2_rot, sdg, 16.0);
         sdg.gradient = rotate(sdg.gradient, a - a2);
         star = Surface(sdg, yellow);
@@ -571,7 +574,7 @@ fn hearts_and_stars(p: vec2<f32>) -> Surface {
         let p2_rot = rotate(p2, a);
         let idx = repeat_idx(p2_rot, 20.0);
         let y_offset = sin(idx * 2.0 * PI / 4.0 + t * 2.0) * 0.05;
-        let size = pow(sin(idx * 2.0 * PI / 6.0 + t * 2.0), 16.0) * 0.2 + 1.0;
+        let size = pow(abs(sin(idx * 2.0 * PI / 6.0 + t * 2.0)), 16.0) * 0.2 + 1.0;
         let p_repeat = (repeat_round(p2_rot, 20.0) + vec2<f32>(0.0, -1.3 + y_offset));
         var sdg = smooth_gradient(heart_gradient(p_repeat, 0.125 * size), 0.01);
         sdg = unfold_gradient(p2_rot, sdg, 20.0);
@@ -587,7 +590,7 @@ fn hearts_and_stars(p: vec2<f32>) -> Surface {
         let p_repeat = repeat_round(p2_rot, 24.0) + vec2<f32>(0.0, -1.65);
         let a2 = smoothstep(0.0, 1.0, (t + idx / 8.0) % 3.0) * 2.0 * PI;
         let a3 = -uniforms.t * 0.15;
-        var sdg = smooth_gradient(star_gradient(rotate(p_repeat, a2 + a3), 0.125), 0.005);
+        var sdg = smooth_gradient(star_gradient(rotate(p_repeat, a2 + a3), 0.125), 0.002);
         sdg = unfold_gradient(p2_rot, sdg, 24.0);
         sdg.gradient = rotate(sdg.gradient, a - a2 - a3);
         star2 = Surface(sdg, yellow);
