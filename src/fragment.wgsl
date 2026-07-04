@@ -67,7 +67,6 @@ const WHITE = vec4<f32>(1.0, 1.0, 1.0, 1.0);
 const GRAY = vec4<f32>(0.5, 0.5, 0.5, 1.0);
 const PI = 3.14159265358979323846;
 
-
 @fragment
 fn fs_main(input: FragInput) -> @location(0) vec4<f32> {
     let aspect_ratio = uniforms.width / uniforms.height;
@@ -82,12 +81,12 @@ fn fs_main(input: FragInput) -> @location(0) vec4<f32> {
 
     let px = px();
     let dist = length(p - uniforms.mouse);
-    color = mix(color, WHITE, smoothstep(1.5*px,0.0,abs(dist)-0.005));
+    color = mix(color, WHITE, smoothstep(1.5 * px, 0.0, abs(dist) - 0.005));
     if uniforms.show_distance == 1 {
         let s = sdf(uniforms.mouse).sdf;
         let diff = dist - abs(s.d);
         let ring_color = mix_srgb4(color, WHITE, 0.3);
-        color = mix(color, ring_color, smoothstep(1.5*px,0.0,abs(diff)-0.002));
+        color = mix(color, ring_color, smoothstep(1.5 * px, 0.0, abs(diff) - 0.002));
     }
 
     return vec4<f32>(color.rgb, 1.0);
@@ -126,10 +125,10 @@ fn colorize_select(p: vec2<f32>, surface: Surface, method: u32) -> vec4<f32> {
 
 fn distance(d: f32) -> vec4<f32> {
     let px = px();
-    var col = select(vec3<f32>(0.9,0.6,0.3), vec3<f32>(0.65,0.85,1.0), d<0.0);
-	col *= 1.0 - exp2(-12.0*abs(d));
-	col *= 0.8 + 0.2*cos(120.0*d);
-	col = mix( col, vec3<f32>(1.0), smoothstep(1.5*px,0.0,abs(d)-0.002) );
+    var col = select(vec3<f32>(0.9, 0.6, 0.3), vec3<f32>(0.65, 0.85, 1.0), d < 0.0);
+    col *= 1.0 - exp2(-12.0 * abs(d));
+    col *= 0.8 + 0.2 * cos(120.0 * d);
+    col = mix(col, vec3<f32>(1.0), smoothstep(1.5 * px, 0.0, abs(d) - 0.002));
     return vec4<f32>(col, 1.0);
 }
 
@@ -143,38 +142,38 @@ fn gradient(sdf: SdfGradient) -> vec4<f32> {
     col *= 1.0 - 0.7 * exp(-12.0 * abs(d));
     col *= 0.85 + 0.15 * cos(120.0 * d);
     // col = mix(col, vec3<f32>(1.0), 1.0 - smoothstep(0.0, 0.01, abs(d)));
-	col = mix( col, vec3<f32>(1.0), smoothstep(1.5*px,0.0,abs(d)-0.002) );
+    col = mix(col, vec3<f32>(1.0), smoothstep(1.5 * px, 0.0, abs(d) - 0.002));
     return vec4<f32>(col, 1.0);
 }
 
 fn outline(surface: Surface) -> vec4<f32> {
     let d = surface.sdf.d;
     let px = px();
-	let col = mix( vec3<f32>(0.0), surface.color.rgb, smoothstep(1.5*px,0.0,abs(d)-0.002) );
+    let col = mix(vec3<f32>(0.0), surface.color.rgb, smoothstep(1.5 * px, 0.0, abs(d) - 0.002));
     return vec4<f32>(col, 1.0);
 }
 
 fn fill(surface: Surface) -> vec4<f32> {
     let d = surface.sdf.d;
     let px = px();
-	let col = mix( vec3<f32>(0), surface.color.rgb, smoothstep(1.5*px,0.0,d-0.002) );
+    let col = mix(vec3<f32>(0), surface.color.rgb, smoothstep(1.5 * px, 0.0, d - 0.002));
     return vec4<f32>(col, 1.0);
 }
 
 fn inside_glow(surface: Surface) -> vec4<f32> {
     let px = px();
     let d = surface.sdf.d;
-    let decay = exp(-d*d * 50.0);
-	let col = mix( vec3<f32>(0), to_linear(surface.color.rgb), decay * smoothstep(1.5*px,0.0,d-0.002) );
+    let decay = exp(-d * d * 50.0);
+    let col = mix(vec3<f32>(0), to_linear(surface.color.rgb), decay * smoothstep(1.5 * px, 0.0, d - 0.002));
     return vec4<f32>(to_srgb(col), 1.0);
 }
 
 fn outside_glow(surface: Surface) -> vec4<f32> {
     let px = px();
     let d = surface.sdf.d;
-    let decay = exp(-d*d * 500.0);
-	let bg = mix( vec3<f32>(0), to_linear(surface.color.rgb), decay * smoothstep(0.0,1.5*px,d+0.002) );
-    let col = mix(bg * 0.5, to_linear(surface.color.rgb), smoothstep(1.5*px,0.0,d-0.002));
+    let decay = exp(-d * d * 500.0);
+    let bg = mix(vec3<f32>(0), to_linear(surface.color.rgb), decay * smoothstep(0.0, 1.5 * px, d + 0.002));
+    let col = mix(bg * 0.5, to_linear(surface.color.rgb), smoothstep(1.5 * px, 0.0, d - 0.002));
     return vec4<f32>(to_srgb(col), 1.0);
 }
 
@@ -190,7 +189,7 @@ fn shadow(p: vec2<f32>, surface: Surface) -> vec4<f32> {
     let shade = ambient + (1.0 - ambient) * shadow;      // shadow in [0,1]
     let shadow_tint = vec3<f32>(0.62, 0.60, 0.66);         // cool, desaturated
     let background = base_lin * mix(shadow_tint, vec3<f32>(1.0), shade);
-    let col = mix( background, to_linear(surface.color.rgb), smoothstep(1.5*px,0.0,d-0.002) );
+    let col = mix(background, to_linear(surface.color.rgb), smoothstep(1.5 * px, 0.0, d - 0.002));
     return vec4<f32>(to_srgb(col), 1.0);
 }
 
@@ -200,13 +199,13 @@ fn soft_shadow(origin: vec2<f32>, dir: vec2<f32>, k: f32, max_t: f32) -> f32 {
     var ph = 1e20;
     for (var i = 0; i < 12; i = i + 1) {
         let h = sdf(origin + dir * t).sdf.d;
-        if (h < 0.001) { return 0.0; }
+        if h < 0.001 { return 0.0; }
         let y = h * h / (2.0 * ph);
         let dd = sqrt(max(h * h - y * y, 0.0));
         res = min(res, k * dd / max(0.0001, t - y));
         ph = h;
         t += h;
-        if (res < 0.005 || t > max_t) { break; }   // early exit
+        if res < 0.005 || t > max_t { break; }   // early exit
     }
     return clamp(res, 0.0, 1.0);
 }
@@ -219,7 +218,7 @@ fn colorize2(d: f32) -> vec4<f32> {
     let base = select(COLOR_OUTSIDE, COLOR_INSIDE, d < 0.0) * phase * decay;
 
     let outline = smoothstep(-0.01 - aa * 0.5, -0.01 + aa * 0.5, d)
-                * smoothstep( 0.01 + aa * 0.5,  0.01 - aa * 0.5, d);
+                * smoothstep(0.01 + aa * 0.5, 0.01 - aa * 0.5, d);
 
     return mix(base, WHITE, outline);
 }
@@ -259,7 +258,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         let t = sin(uniforms.t * 2.0) * 0.5 + 0.5;
         let w = 0.1 * t;
         let a = uniforms.a;
-        let size = vec2<f32>(0.5 + w * (1-a) , 0.4 + w * (1-a));
+        let size = vec2<f32>(0.5 + w * (1 - a), 0.4 + w * (1 - a));
         surface.sdf = rounded_rectangle_gradient(p, size, w);
     }
     if index == 3 {
@@ -287,15 +286,15 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         surface.color = mix(EQT_ORANGE, WHITE, t);
     }
     if index == 6 {
-        let t = uniforms.t*0.2;
+        let t = uniforms.t * 0.2;
         let c1 = vec4<f32>(1.0, 0.5, 0.0, 1.0);
         let c2 = vec4<f32>(0.0, 1.0, 1.0, 1.0);
         let c3 = vec4<f32>(1.0, 0.0, 1.0, 1.0);
         let c4 = vec4<f32>(1.0, 1.0, 0.0, 1.0);
-        let d1 = circle(p - 0.3*vec2<f32>(sin(t*2), cos(t*5)), 0.3);
-        let d2 = circle(p - 0.4*vec2<f32>(sin(t*7), cos(t*3)), 0.4);
-        let d3 = circle(p - 0.5*vec2<f32>(sin(t*3.5), cos(t*6)), 0.3);
-        let d4 = circle(p - 0.6*vec2<f32>(sin(t*4), cos(t*7)), 0.4);
+        let d1 = circle(p - 0.3 * vec2<f32>(sin(t * 2), cos(t * 5)), 0.3);
+        let d2 = circle(p - 0.4 * vec2<f32>(sin(t * 7), cos(t * 3)), 0.4);
+        let d3 = circle(p - 0.5 * vec2<f32>(sin(t * 3.5), cos(t * 6)), 0.3);
+        let d4 = circle(p - 0.6 * vec2<f32>(sin(t * 4), cos(t * 7)), 0.4);
         let k = 0.1 + 0.5 * uniforms.a;
 
         let s1 = Surface(d1, c1);
@@ -309,13 +308,13 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         surface.color = final_color;
     }
     if index == 7 {
-        let sdg = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4)*0.35), vec2<f32>(0.4, 0.3)*0.1), 0.02);
+        let sdg = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4) * 0.35), vec2<f32>(0.4, 0.3) * 0.1), 0.02);
         let final_color = sunlight(with_color(sdg, EQT_ORANGE), 100.0);
         surface.sdf = sdg;
         surface.color = final_color;
     }
     if index == 8 {
-        let d1 = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4)*0.35), vec2<f32>(0.4, 0.3)*0.1), 0.02);
+        let d1 = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4) * 0.35), vec2<f32>(0.4, 0.3) * 0.1), 0.02);
         // var d1 = rectangle_gradient(p, vec2<f32>(0.5, 0.4));
         let d2 = circle(p - uniforms.mouse, 0.5);
         var sdg = ssub_gradient(d1, d2, 0.01);
@@ -327,7 +326,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         let y_offset = array<f32, 10>(53.74317862550531, 85.23981992472287, 29.703435993625384, 82.08447970975581, 35.07665993737946, 70.97812114584, 5.330707208960284, 36.0846691221548, 19.959420213543023, 95.6516270747098);
         let angles = array<f32, 10>(4.641453081142971, 4.492214232092462, 5.970784844929799, 6.233110050449939, 3.2447643399115638, 0.05582118483421819, 3.4631994369022845, 4.49588529220744, 0.4456076730154957, 4.772053382359597);
         let t = uniforms.t;
-        let d1 = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4)*0.35), vec2<f32>(0.4, 0.3)*0.1), 0.02);
+        let d1 = smooth_gradient(rectangle_gradient(repeat(p, vec2<f32>(0.5, 0.4) * 0.35), vec2<f32>(0.4, 0.3) * 0.1), 0.02);
         // var d1 = rectangle_gradient(p, vec2<f32>(0.5, 0.4));
         let d2 = circle(p - uniforms.mouse, 0.5);
         var sdg = sintersect_gradient(d1, d2, 0.01);
@@ -364,7 +363,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         let p_rot = rotate(p, uniforms.t * 0.2);
         let p_rot2 = rotate(p, -uniforms.t * 0.1);
 
-        var heart = smooth_gradient(heart_gradient(repeat_round(p, 12.0)+ vec2<f32>(0.0, -0.8), 0.125), 0.01);
+        var heart = smooth_gradient(heart_gradient(repeat_round(p, 12.0) + vec2<f32>(0.0, -0.8), 0.125), 0.01);
         heart = unfold_gradient(p, heart, 12.0);
         let heart_s = Surface(heart, EQT_ORANGE);
 
@@ -401,7 +400,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
         let t = uniforms.t - frame_start;
         let scale = 1.0 + smoothstep(0.0, 1.0, t - 0.5);
         let offset = 1.0 - smoothstep(0.0, 1.0, t - 1.0);
-        var logo = eqt_logo_sdf(p*scale);
+        var logo = eqt_logo_sdf(p * scale);
         logo.sdf.d /= scale;
         var background = hearts_and_stars(p);
         background.sdf.d += offset;
@@ -411,7 +410,7 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
     }
     if index == 17 {
         let scale = 2.0;
-        var logo = eqt_logo_sdf(p*scale);
+        var logo = eqt_logo_sdf(p * scale);
         logo.sdf.d /= scale;
         var background = hearts_and_stars(p);
         let s = smin_surface(logo, background, 0.0);
@@ -422,8 +421,8 @@ fn sdf_select(p: vec2<f32>, index: u32, frame_start: f32) -> Surface {
 }
 
 fn sun_intensity2(sdg: SdfGradient, w: f32) -> f32 {
-    let a = acos(max(0.0, 1+sdg.d*w));
-    let n = vec3(cos(a)*sdg.gradient, sin(a));
+    let a = acos(max(0.0, 1 + sdg.d * w));
+    let n = vec3(cos(a) * sdg.gradient, sin(a));
     let sun_direction = normalize(vec3<f32>(-1.0, -1.0, 1.0));
     let intensity = max(0.0, dot(n, sun_direction)) * 1 + 0.385;
     return intensity;
@@ -440,9 +439,9 @@ fn sun_intensity(sdg: SdfGradient, w: f32) -> f32 {
     let sun_direction = normalize(vec3<f32>(-1.0, -1.0, 1.0));
     let view = vec3<f32>(0, 0, 1);
     let half_vec = normalize(sun_direction + view);
-    let diffuse  = max(0.0, dot(n, sun_direction));
-    let spec     = pow(max(dot(n, half_vec), 0.0), 32.0);
-    let fresnel  = pow(1.0 - max(dot(n, view), 0.0), 5.0);
+    let diffuse = max(0.0, dot(n, sun_direction));
+    let spec = pow(max(dot(n, half_vec), 0.0), 32.0);
+    let fresnel = pow(1.0 - max(dot(n, view), 0.0), 5.0);
     return 0.38452 + diffuse + spec * 0.6 + fresnel * 0.4;
 }
 
@@ -493,12 +492,12 @@ fn smin_surface(a: Surface, b: Surface, k: f32) -> Surface {
     return Surface(sdf, color);
 }
 
-fn smooth_add( a: f32, b: f32, k: f32 ) -> f32 {
-    let h = max(4.0*k-abs(a-b),0.0);
-    return min(a, b) - h*h/(k*16.0);
+fn smooth_add(a: f32, b: f32, k: f32) -> f32 {
+    let h = max(4.0 * k - abs(a - b), 0.0);
+    return min(a, b) - h * h / (k * 16.0);
 }
 
-fn smooth_subtract( a: f32, b: f32, k: f32 ) -> f32 {
+fn smooth_subtract(a: f32, b: f32, k: f32) -> f32 {
     return -smooth_add(-a, b, k);
 }
 
@@ -537,8 +536,6 @@ fn unfold_gradient(p: vec2<f32>, s_in: SdfGradient, n: f32) -> SdfGradient {
     return s;
 }
 
-
-
 fn hearts_and_stars(p: vec2<f32>) -> Surface {
     let t = uniforms.t;
     let p2 = p * 1.0;
@@ -549,7 +546,7 @@ fn hearts_and_stars(p: vec2<f32>) -> Surface {
     {
         let idx = repeat_idx(p2, 12.0) % 2.0;
         let w = pow(select(max(0.0, sin(uniforms.t * 4.0)), -min(0.0, sin(uniforms.t * 4.0)), idx == 0.0), 2.0);
-        var sdg = smooth_gradient(heart_gradient(repeat_round(p2, 12.0) + vec2<f32>(0.0, -0.8), 0.125), 0.01*w);
+        var sdg = smooth_gradient(heart_gradient(repeat_round(p2, 12.0) + vec2<f32>(0.0, -0.8), 0.125), 0.01 * w);
         sdg = unfold_gradient(p2, sdg, 12.0);
         heart = Surface(sdg, red);
     }
@@ -576,7 +573,7 @@ fn hearts_and_stars(p: vec2<f32>) -> Surface {
         let y_offset = sin(idx * 2.0 * PI / 4.0 + t * 2.0) * 0.05;
         let size = pow(sin(idx * 2.0 * PI / 6.0 + t * 2.0), 16.0) * 0.2 + 1.0;
         let p_repeat = (repeat_round(p2_rot, 20.0) + vec2<f32>(0.0, -1.3 + y_offset));
-        var sdg = smooth_gradient(heart_gradient(p_repeat, 0.125*size), 0.01);
+        var sdg = smooth_gradient(heart_gradient(p_repeat, 0.125 * size), 0.01);
         sdg = unfold_gradient(p2_rot, sdg, 20.0);
         sdg.gradient = rotate(sdg.gradient, a);
         heart2 = Surface(sdg, red);
@@ -607,8 +604,8 @@ fn circle(p: vec2<f32>, r: f32) -> SdfGradient {
 }
 
 fn rectangle(p: vec2<f32>, size: vec2<f32>) -> f32 {
-    let d = abs(p)-size;
-    return length(max(d,vec2<f32>(0.0,0.0))) + min(max(d.x,d.y),0.0);
+    let d = abs(p) - size;
+    return length(max(d, vec2<f32>(0.0, 0.0))) + min(max(d.x, d.y), 0.0);
 }
 
 fn rectangle_gradient(p: vec2<f32>, b: vec2<f32>) -> SdfGradient {
@@ -649,11 +646,11 @@ fn heart(p_in: vec2<f32>, r: f32) -> f32 {
     p /= r;
     p.y += 0.5;
 
-    if p.y+p.x>1.0 {
-        return sqrt(dot2(p-vec2(0.25,0.75))) - sqrt(2.0)/4.0;
+    if p.y + p.x > 1.0 {
+        return sqrt(dot2(p - vec2(0.25, 0.75))) - sqrt(2.0) / 4.0;
     }
-    return sqrt(min(dot2(p-vec2(0.00,1.00)),
-                    dot2(p-0.5*max(p.x+p.y,0.0)))) * sign(p.x-p.y);
+    return sqrt(min(dot2(p - vec2(0.00, 1.00)),
+        dot2(p - 0.5 * max(p.x + p.y, 0.0)))) * sign(p.x - p.y);
 }
 
 fn heart_gradient(p_in: vec2<f32>, r_in: f32) -> SdfGradient {
@@ -662,7 +659,7 @@ fn heart_gradient(p_in: vec2<f32>, r_in: f32) -> SdfGradient {
     p.x = abs(p.x);
     p /= r_in;
 
-    if (p.y + p.x > 1.0) {
+    if p.y + p.x > 1.0 {
         let r = sqrt(2.0) / 4.0;
         let q0 = p - vec2<f32>(0.25, 0.75);
         let l = length(q0);
@@ -735,12 +732,12 @@ fn star_gradient(p_in: vec2<f32>, r: f32) -> SdfGradient {
     // fold 2: reflect across v1 if active
     let a1 = dot(v1, p);
     let active1 = a1 > 0.0;
-    if (active1) { p -= 2.0 * a1 * v1; }
+    if active1 { p -= 2.0 * a1 * v1; }
 
     // fold 3: reflect across v2 if active
     let a2 = dot(v2, p);
     let active2 = a2 > 0.0;
-    if (active2) { p -= 2.0 * a2 * v2; }
+    if active2 { p -= 2.0 * a2 * v2; }
 
     // fold 4: abs(x) again
     let s1 = sign(p.x);
@@ -761,10 +758,10 @@ fn star_gradient(p_in: vec2<f32>, r: f32) -> SdfGradient {
     g.x *= s1;
 
     // undo fold 3 (reflect across v2): apply R2 = I - 2 v2 v2^T  (symmetric)
-    if (active2) { g -= 2.0 * dot(v2, g) * v2; }
+    if active2 { g -= 2.0 * dot(v2, g) * v2; }
 
     // undo fold 2 (reflect across v1)
-    if (active1) { g -= 2.0 * dot(v1, g) * v1; }
+    if active1 { g -= 2.0 * dot(v1, g) * v1; }
 
     // undo fold 1 (abs x): multiply x-component by s0
     g.x *= s0;
@@ -819,9 +816,9 @@ fn eqt_logo_sdf(p_in: vec2<f32>) -> Surface {
 }
 
 fn stylized_q(p: vec2<f32>) -> f32 {
-    let a = 3.14159*0.75;
+    let a = 3.14159 * 0.75;
     let n = vec2<f32>(cos(a), sin(a));
-    let a2 = 3.14159*0.75;
+    let a2 = 3.14159 * 0.75;
     return min(
         ring(p, n, 0.42, 0.16, a2),
         oriented_rectangle(p, vec2<f32>(0.05, 0.05), vec2<f32>(0.45, 0.45), 0.16),
@@ -882,7 +879,7 @@ fn ring(p_in: vec2<f32>, n: vec2<f32>, r: f32, th: f32, angle: f32) -> f32 {
     p.x = abs(p.x);
     p = mat2x2<f32>(n.x, n.y, -n.y, n.x) * p;
     return max(abs(length(p) - r) - th * 0.5,
-               length(vec2<f32>(p.x, max(0.0, abs(r - p.y) - th * 0.5))) * sign(p.x));
+        length(vec2<f32>(p.x, max(0.0, abs(r - p.y) - th * 0.5))) * sign(p.x));
 }
 
 fn triangle_equilateral(p_in: vec2<f32>, r: f32) -> f32 {
@@ -904,7 +901,7 @@ fn triangle_isosceles(p_in: vec2<f32>, q: vec2<f32>) -> f32 {
     let b = p - q * vec2<f32>(clamp(p.x / q.x, 0.0, 1.0), 1.0);
     let s = -sign(q.y);
     let d = min(vec2<f32>(dot(a, a), s * (p.x * q.y - p.y * q.x)),
-                vec2<f32>(dot(b, b), s * (p.y - q.y)));
+        vec2<f32>(dot(b, b), s * (p.y - q.y)));
     return -sqrt(d.x) * sign(d.y);
 }
 
@@ -941,8 +938,8 @@ fn dot2(p: vec2<f32>) -> f32 {
     return dot(p, p);
 }
 
-fn onion( d: f32, r: f32 ) -> f32 {
-  return abs(d) - r;
+fn onion(d: f32, r: f32) -> f32 {
+    return abs(d) - r;
 }
 
 fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
